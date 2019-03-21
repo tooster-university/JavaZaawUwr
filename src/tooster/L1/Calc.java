@@ -1,4 +1,4 @@
-package sample;
+package tooster.L1;
 
 import javafx.application.Application;
 import javafx.geometry.HPos;
@@ -16,7 +16,8 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.function.BinaryOperator;
 
-public class Main extends Application {
+
+public class Calc extends Application {
 
     Label exprDisplay, resultDisplay;
     Button calc;
@@ -81,12 +82,12 @@ public class Main extends Application {
         opMod.setOnAction((e) -> applyOp(BigInteger::mod));
         clear = new Button("C");
         clear.setOnAction((e) -> {
-                accumulator = new BigInteger("0");
-                resultDisplay.setText("0");
-                arg = new BigInteger("0");
-                exprDisplay.setText("0");
-                argChanged = false;
-                op = (BigInteger acc, BigInteger arg) -> arg;
+            accumulator = new BigInteger("0");
+            resultDisplay.setText("0");
+            arg = new BigInteger("0");
+            exprDisplay.setText("0");
+            argChanged = false;
+            op = (BigInteger acc, BigInteger arg) -> arg;
 
         });
 

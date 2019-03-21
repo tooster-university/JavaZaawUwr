@@ -1,0 +1,21 @@
+.number-label{
+    -fx-alignment: center;
+    -fx-content-display: center;
+    -fx-font: 36px System;
+    -fx-font-weight: bold;
+    -fx-text-alignment: center;
+    -fx-max-width: Infinity;
+    -fx-max-height: Infinity;
+}
+
+.zero-label{
+    -fx-text-fill: #b50000;
+}
+
+.prime-label{
+    -fx-text-fill: #22f797;
+}
+
+.composite-label{
+    -fx-text-fill: #aaaa00;
+}
