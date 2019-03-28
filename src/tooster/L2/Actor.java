@@ -1,107 +1,91 @@
 package tooster.L2;
 
+import java.beans.*;
+
 import com.sun.istack.internal.NotNull;
+import javafx.application.Platform;
 import javafx.concurrent.Task;
+import sun.plugin2.util.SystemUtil;
 
 import java.util.Random;
 
 public class Actor extends Task<Void> {
 
-    private int id;
 
     private static Random random = new Random();
-    private Renderable renderable;
-    private Model.Field field;
+    private int actorId;
 
-    // Actor factory method to bind with renderable
-    static Actor createActor(int id, @NotNull Model.Field field) {
-        Actor actor = id != 0 ?
-                new Actor(id, field) :
-                new Actor(id, field) {
-                    // probability is equal in all axes
-                    @Override
-                    protected int[] probabilityCalculator(int deltaRow, int deltaCol) { return new int[]{25, 25, 25};}
+    private VetoableChangeSupport vcs = new VetoableChangeSupport(this);
+    private PropertyChangeSupport pcs = new PropertyChangeSupport(this);
 
-//                    @Override
-//                    protected void randomMove() {
-//                        Model.Field nextField = field.getNeighbor(nextDirection());
-//
-//                    }
-
-                };
-        actor.renderable = new Renderable(actor); // bind renderable to actor
-        return actor;
+    // returns probability for move in given direction where dR dC are delta of zero position minus self position
+    // probabilities sum up to 100. Returned array in form [up, left], down and right is implicit 50 - < up | left >
+    protected int[] probabilityCalculator() {
+        Controller.Pos zeroPos = Controller.getInstance().getPos(0);
+        Controller.Pos pos = Controller.getInstance().getPos(actorId);
+        int deltaRow = zeroPos.getRow() - pos.getRow(), deltaCol = zeroPos.getCol() - pos.getCol();
+        double factor = (-20.0) / 9.0;
+        return new int[]{
+                25 + (int) (Math.signum(-deltaRow) * (20 + factor * Math.abs(deltaRow))),
+                25 + (int) (Math.signum(-deltaCol) * (20 + factor * Math.abs(deltaCol)))};
     }
 
-    private Actor(int id, Model.Field field) {
-        super();
-        this.id = id;
-        this.field = field;
+    @NotNull
+    protected Controller.DIRECTION nextDirection() {
+        int[] prob = probabilityCalculator(); // probabilities
+        Controller.Pos pos = Controller.getInstance().getPos(actorId);
+
+        int roll = random.nextInt(100);
+        Controller.DIRECTION direction;
+        // probability: [0 ~> prob[0]):UP [prob[0] ~> 50):DOWN [50 ~> prob[1]):UP [prob[1] ~> 100):DOWN
+        if (roll < prob[0]) direction = Controller.DIRECTION.UP;
+        else if (roll < 50) direction = Controller.DIRECTION.DOWN;
+        else if (roll < 50 + prob[1]) direction = Controller.DIRECTION.LEFT;
+        else direction = Controller.DIRECTION.RIGHT;
+
+        // those two lines assure, that move is always inside the board
+        if (pos.getRow() == 0 && direction == Controller.DIRECTION.UP) return Controller.DIRECTION.DOWN;
+        if (pos.getRow() == Controller.size - 1 && direction == Controller.DIRECTION.DOWN)
+            return Controller.DIRECTION.UP;
+        if (pos.getCol() == 0 && direction == Controller.DIRECTION.LEFT) return Controller.DIRECTION.RIGHT;
+        if (pos.getCol() == Controller.size - 1 && direction == Controller.DIRECTION.RIGHT)
+            return Controller.DIRECTION.LEFT;
+        else return direction;
     }
+
 
     @Override
-    protected Void call() throws Exception {
-        try {
-            while (!isCancelled()) {
-                randomMove();
-                Thread.sleep(50 + random.nextInt(100));
-            }
-        } catch (InterruptedException e) {
-            field.unlock(this);
+    public Void call() throws Exception {
+        while (!isCancelled()) {
+            Platform.runLater(new Runnable() {
+                @Override
+                public void run() {
+                    for (int flag = 0; flag < 2; flag++) {
+                        try {
+                            Controller.DIRECTION direction = nextDirection();
+                            vcs.fireVetoableChange("pos", null, direction);
+                            break; // exit loop
+                        } catch (PropertyVetoException pve) {
+                        } // veto of move => try move once again
+                        catch (NullPointerException npe) {
+                            cancel();
+                        }
+                    }
+                }
+            });
+
+            Thread.sleep(500 + random.nextInt(1000));
         }
         return null;
     }
 
 
-    // returns probability for move in given direction where dR dC are delta of zero position minus self position
-    // probabilities sum up to 100. Returned array in form [up, down, left], right is implicit 100-u-d-l
-    protected int[] probabilityCalculator(int deltaRow, int deltaCol) {
-        double factor = (-20.0) / 9.0;
-        return new int[]{
-                25 + (int) (Math.signum(-deltaRow) * (20 + factor * Math.abs(deltaRow))),
-                25 - (int) (Math.signum(-deltaRow) * (20 + factor * Math.abs(deltaRow))),
-                25 + (int) (Math.signum(-deltaCol) * (20 + factor * Math.abs(deltaCol)))};
-    }
+    int getId() { return actorId; }
 
-    @NotNull
-    protected Model.DIRECTION nextDirection() {
-        Model model = Model.getInstance();
-        int[] cords = field.getCords();
-        int[] zero = model.getZero();
-        int[] prob = probabilityCalculator(zero[0] - cords[0], zero[1] - cords[1]); // probabilities
+    void setId(int actorId) { this.actorId = actorId; }
 
-        int roll = random.nextInt(100);
-        Model.DIRECTION direction;
-        if (roll < prob[0]) direction = Model.DIRECTION.UP;
-        else if (roll < prob[0] + prob[1]) direction = Model.DIRECTION.DOWN;
-        else if (roll < prob[0] + prob[1] + prob[2]) direction = Model.DIRECTION.LEFT;
-        else direction = Model.DIRECTION.RIGHT;
+    public void addVetoableChangeListener(VetoableChangeListener listener) { vcs.addVetoableChangeListener(listener); }
 
-        // those two lines assure, that move is always inside the board
-        if (cords[0] == 0 && direction == Model.DIRECTION.UP) return Model.DIRECTION.DOWN;
-        if (cords[0] == Model.size - 1 && direction == Model.DIRECTION.DOWN) return Model.DIRECTION.UP;
-        if (cords[1] == 0 && direction == Model.DIRECTION.LEFT) return Model.DIRECTION.RIGHT;
-        if (cords[1] == Model.size - 1 && direction == Model.DIRECTION.RIGHT) return Model.DIRECTION.LEFT;
-        else return direction;
-    }
+    public void removeVetoableChangeListener(VetoableChangeListener listener) { vcs.removeVetoableChangeListener(listener); }
 
-    protected void randomMove() {
-
-        @NotNull Model.Field nextField = field.getNeighbor(nextDirection());
-
-        if (this != nextField.tryLock(this)) {
-            nextField = field.getNeighbor(nextDirection());
-            nextField.tryLock(this);
-        }
-
-        if (nextField.getOwner() == this) {
-            renderable.moveAnimation(nextField); // play animation on renderable
-            field.unlock(this);
-            field = nextField;
-        }
-    }
-
-    int getActorId() { return id; }
-
-    Model.Field getField() { return field; }
 }

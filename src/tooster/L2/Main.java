@@ -10,12 +10,13 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("sim.fxml"));
+        setUserAgentStylesheet(STYLESHEET_MODENA);
         Scene scene = new Scene(loader.load());
         Controller.setInstance(loader.getController());
 
         primaryStage.setScene(scene);
+        Controller.getInstance().restartSim(null);
         primaryStage.show();
-        Model.getInstance().reset();
     }
 
     public static void main(String[] args) {
