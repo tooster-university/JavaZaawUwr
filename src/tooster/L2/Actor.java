@@ -2,10 +2,8 @@ package tooster.L2;
 
 import java.beans.*;
 
-import com.sun.istack.internal.NotNull;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
-import sun.plugin2.util.SystemUtil;
 
 import java.util.Random;
 
@@ -30,7 +28,6 @@ public class Actor extends Task<Void> {
                 25 + (int) (Math.signum(-deltaCol) * (20 + factor * Math.abs(deltaCol)))};
     }
 
-    @NotNull
     protected Controller.DIRECTION nextDirection() {
         int[] prob = probabilityCalculator(); // probabilities
         Controller.Pos pos = Controller.getInstance().getPos(actorId);
