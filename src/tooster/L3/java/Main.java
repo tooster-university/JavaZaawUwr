@@ -5,14 +5,13 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.net.URL;
 import java.util.ResourceBundle;
 
 public class Main extends Application {
 
     private static ResourceBundle bundle;
 
-    public static ResourceBundle getBundle() { return bundle; }
+    static ResourceBundle getBundle() { return bundle; }
 
     @Override
     public void start(Stage primateStage) throws Exception {
@@ -21,7 +20,7 @@ public class Main extends Application {
 
         Scene scene = new Scene(loader.load());
         primateStage.setScene(scene);
-        primateStage.setTitle("tittle");
+        primateStage.setTitle(bundle.getString("title"));
         primateStage.show();
     }
 

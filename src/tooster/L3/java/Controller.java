@@ -1,30 +1,26 @@
 package tooster.L3.java;
 
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.ObservableListBase;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.ComboBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.control.cell.TextFieldTableCell;
-import javafx.util.Callback;
 import javafx.util.StringConverter;
 
 import java.math.BigDecimal;
 import java.text.DateFormat;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Currency;
+import java.util.Date;
+import java.util.Locale;
+import java.util.ResourceBundle;
 
 public class Controller {
 
-    ObservableList<Expense> data = FXCollections.observableArrayList(new Expense(true, new Date(), new BigDecimal(17), "desc"));
+    private ObservableList<Expense> data = FXCollections.observableArrayList();
 
     // hold amounts
     private BigDecimal recVal = new BigDecimal(0), constVal = new BigDecimal(0);
@@ -36,7 +32,7 @@ public class Controller {
     private TableColumn<Expense, String> typeColumn;
 
     @FXML
-    private TableColumn<Expense, String> amountColumn;
+    private TableColumn<Expense, BigDecimal> amountColumn;
 
     @FXML
     private TableColumn<Expense, Date> dateColumn;
@@ -88,19 +84,19 @@ public class Controller {
             Expense expense = param.getValue();
 
             boolean isRecurrent = expense.isRecurrent();
-            return new SimpleObjectProperty<String>(isRecurrent ? type_recurring_string : type_constant_string);
+            return new SimpleObjectProperty<>(isRecurrent ? type_recurring_string : type_constant_string);
         });
 
         typeColumn.setCellFactory(ComboBoxTableCell.forTableColumn(type_constant_string, type_recurring_string));
         typeColumn.setOnEditCommit((TableColumn.CellEditEvent<Expense, String> t) -> {
             Expense expense = t.getTableView().getItems().get(t.getTablePosition().getRow());
-            String oldType = t.getOldValue();
-            String newType = t.getNewValue();
 
-            if (oldType.equals(type_recurring_string)) setRecurring(recVal.subtract(expense.getValue()));
+
+            if (expense.isRecurrent()) setRecurring(recVal.subtract(expense.getValue()));
             else setConstant(constVal.subtract(expense.getValue()));
 
-            if (newType.equals(type_recurring_string)) setRecurring(recVal.add(expense.getValue()));
+            expense.setRecurrent(t.getNewValue().equals(type_recurring_string));
+            if (expense.isRecurrent()) setRecurring(recVal.add(expense.getValue()));
             else setConstant(constVal.add(expense.getValue()));
         });
 
@@ -118,7 +114,10 @@ public class Controller {
                 try {
                     return DateFormat.getDateInstance(DateFormat.DEFAULT).parse(string);
                 } catch (ParseException e) {
-                    return null;
+                    Alert alert = new Alert(Alert.AlertType.ERROR, bundle.getString("invalid_date"));
+                    alert.setHeaderText(null);
+                    alert.showAndWait();
+                    return new Date(); // on wrong date input
                 }
 
             }
@@ -134,38 +133,63 @@ public class Controller {
 
         // amount column
         amountColumn.setCellValueFactory(new PropertyValueFactory<>("value"));
-        amountColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+        amountColumn.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<BigDecimal>() {
+            @Override
+            public String toString(BigDecimal object) {return object.toString();}
+
+            @Override
+            public BigDecimal fromString(String string) {
+                if (string.matches("\\d+([.]\\d{2})?"))
+                    return new BigDecimal(string);
+                else return new BigDecimal(0);
+            }
+        }));
+
         amountColumn.setOnEditCommit(t -> {
             Expense expense = t.getTableView().getItems().get(t.getTablePosition().getRow());
-            String newValueStr = t.getNewValue();
 
-            if (newValueStr.matches("\\d+([.]\\d{2})?")) {  // wrong format
-                if (expense.isRecurrent()) setRecurring(expense.getValue());
-                else setConstant(expense.getValue());
-                expense.setValue(new BigDecimal(newValueStr));
-            }
+            if (expense.isRecurrent()) setRecurring(recVal.subtract(expense.getValue()));
+            else setConstant(constVal.subtract(expense.getValue()));
+
+            expense.setValue(t.getNewValue());
+            if (expense.isRecurrent()) setRecurring(recVal.add(expense.getValue()));
+            else setConstant(constVal.add(expense.getValue()));
         });
 
+
+        // description column
+        descColumn.setCellValueFactory(new PropertyValueFactory<>("desc"));
+        descColumn.setCellFactory(TextFieldTableCell.forTableColumn());
+
+        descColumn.setOnEditCommit(t -> t.getTableView().getItems().get(t.getTablePosition().getRow()).setDescription(t.getNewValue()));
+
         table.setItems(data);
+
+        table.setPlaceholder(new Label(bundle.getString("table_empty")));
     }
 
 
     @FXML
-    void createRow() throws Exception {
+    void createRow() {
         data.add(new Expense(false, new Date(), new BigDecimal(0), ""));
     }
 
     @FXML
     void removeActive() {
-        table.getItems().remove(table.getSelectionModel().getSelectedItem());
+        Expense expense = table.getSelectionModel().getSelectedItem();
+        if(expense == null) return;
+
+        if(expense.isRecurrent()) setRecurring(recVal.subtract(expense.getValue()));
+        else setConstant(constVal.subtract(expense.getValue()));
+        table.getItems().remove(expense);
     }
 
-    void setRecurring(BigDecimal val) {
+    private void setRecurring(BigDecimal val) {
         recVal = val;
         rExpensesValueLabel.setText(recVal.toString() + Currency.getInstance(Locale.getDefault()).getSymbol());
     }
 
-    void setConstant(BigDecimal val) {
+    private void setConstant(BigDecimal val) {
         constVal = val;
         cExpensesValueLabel.setText(constVal.toString() + Currency.getInstance(Locale.getDefault()).getSymbol());
     }
