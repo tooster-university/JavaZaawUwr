@@ -1,0 +1,26 @@
+.btn{
+    -fx-text-fill: #fff;
+    -fx-background-radius: 10%;
+    -fx-font-weight: bolder;
+}
+
+.sub_btn {
+    -fx-background-color: #bb0000;
+}
+
+.sub_btn:pressed{
+    -fx-background-color: #880000;
+}
+
+.add_btn{
+    -fx-background-color: #00aa00;
+}
+
+.add_btn:pressed{
+    -fx-background-color: #008800;
+}
+
+.statusbox{
+    -fx-border-style: solid;
+    -fx-border-color: darkgray;
+}
