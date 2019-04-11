@@ -3,9 +3,10 @@ package src.tooster.java.server;
 import src.tooster.java.common.PrimerInterface;
 
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 
-public class Primer implements PrimerInterface {
+public class Primer extends UnicastRemoteObject implements PrimerInterface {
     private static final int LIMIT = 1 << 24; // ~ 64 mb
     private static final int[] sieve;
 
@@ -17,6 +18,9 @@ public class Primer implements PrimerInterface {
             for (int j = i; j < LIMIT; j += i)
                 if (sieve[j] == 0)
                     sieve[j] = i;
+    }
+
+    protected Primer() throws RemoteException {
     }
 
 

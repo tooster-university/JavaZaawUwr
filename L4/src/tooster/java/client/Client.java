@@ -1,5 +1,6 @@
 package src.tooster.java.client;
 
+import src.tooster.java.common.PrimerFactoryInterface;
 import src.tooster.java.common.PrimerInterface;
 
 import java.rmi.registry.LocateRegistry;
@@ -14,7 +15,9 @@ public class Client {
         try{
             Registry registry = LocateRegistry.getRegistry(null); // localhost
 
-            PrimerInterface primer = (PrimerInterface) registry.lookup("primer");
+            PrimerFactoryInterface primerFactory =
+                    (PrimerFactoryInterface) registry.lookup("primerFactory");
+            PrimerInterface primer = primerFactory.getPrimer();
 
             Scanner scanner = new Scanner(System.in);
             long x = scanner.nextLong();
