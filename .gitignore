@@ -5,6 +5,7 @@
 
 # project meta
 **/.idea
+**/*.iml
 
 # User-specific stuff
 .idea/**/workspace.xml
