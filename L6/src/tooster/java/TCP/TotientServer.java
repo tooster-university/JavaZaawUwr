@@ -1,4 +1,4 @@
-package tooster.java;
+package tooster.java.TCP;
 
 import java.io.BufferedReader;
 import java.io.IOException;
