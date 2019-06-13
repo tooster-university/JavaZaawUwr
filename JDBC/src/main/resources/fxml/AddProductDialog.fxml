@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+
+<AnchorPane prefHeight="186.0" prefWidth="353.0" xmlns="http://javafx.com/javafx/10.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="me.tooster.AddProductController">
+   <children>
+      <TextField fx:id="IDField" layoutX="14.0" layoutY="23.0" prefHeight="25.0" prefWidth="170.0" promptText="Product ID" />
+      <CheckBox fx:id="kilogramsCheckbox" layoutX="194.0" layoutY="27.0" mnemonicParsing="false" text="count in kilograms" />
+      <TextArea fx:id="descriptionField" layoutX="15.0" layoutY="59.0" prefHeight="68.0" prefWidth="324.0" promptText="Product Description" />
+      <Button fx:id="cancelButton" layoutX="269.0" layoutY="147.0" mnemonicParsing="false" onAction="#handleCancel" prefHeight="25.0" prefWidth="70.0" text="Cancel" />
+      <Button fx:id="okButton" layoutX="194.0" layoutY="147.0" mnemonicParsing="false" onAction="#handleOK" prefHeight="25.0" prefWidth="70.0" text="OK" />
+   </children>
+</AnchorPane>
